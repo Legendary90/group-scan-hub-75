@@ -231,6 +231,212 @@ export const DocumentsModule = () => {
             </CardContent>
           </Card>
 
+          {documentType === "challan" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Challan Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Challan Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Challan Number</Label>
+                    <Input
+                      value={challanData.challanNumber}
+                      onChange={(e) => setChallanData({...challanData, challanNumber: e.target.value})}
+                      placeholder="CH-001"
+                    />
+                  </div>
+                  <div>
+                    <Label>Date</Label>
+                    <Input
+                      type="date"
+                      value={challanData.date}
+                      onChange={(e) => setChallanData({...challanData, date: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                {/* Sender & Receiver Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">Sender Details (Supplier/Exporter)</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Sender Name</Label>
+                        <Input
+                          value={challanData.senderName}
+                          onChange={(e) => setChallanData({...challanData, senderName: e.target.value})}
+                          placeholder="Sender Company Name"
+                        />
+                      </div>
+                      <div>
+                        <Label>Sender Address</Label>
+                        <Textarea
+                          value={challanData.senderAddress}
+                          onChange={(e) => setChallanData({...challanData, senderAddress: e.target.value})}
+                          placeholder="Complete Sender Address"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">Receiver Details (Buyer/Importer)</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Receiver Name</Label>
+                        <Input
+                          value={challanData.receiverName}
+                          onChange={(e) => setChallanData({...challanData, receiverName: e.target.value})}
+                          placeholder="Receiver Company Name"
+                        />
+                      </div>
+                      <div>
+                        <Label>Receiver Address</Label>
+                        <Textarea
+                          value={challanData.receiverAddress}
+                          onChange={(e) => setChallanData({...challanData, receiverAddress: e.target.value})}
+                          placeholder="Complete Receiver Address"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Goods Details */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Description of Goods</h3>
+                    <Button 
+                      onClick={() => {
+                        setChallanData({
+                          ...challanData,
+                          goods: [...challanData.goods, { description: "", quantity: 0, weight: "", batchNo: "" }]
+                        });
+                      }} 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Item
+                    </Button>
+                  </div>
+
+                  {challanData.goods.map((item, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 border rounded">
+                      <div>
+                        <Label>Product Description</Label>
+                        <Input
+                          placeholder="Product name"
+                          value={item.description}
+                          onChange={(e) => {
+                            const updatedGoods = [...challanData.goods];
+                            updatedGoods[index].description = e.target.value;
+                            setChallanData({...challanData, goods: updatedGoods});
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label>Quantity/Units</Label>
+                        <Input
+                          type="number"
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const updatedGoods = [...challanData.goods];
+                            updatedGoods[index].quantity = parseInt(e.target.value) || 0;
+                            setChallanData({...challanData, goods: updatedGoods});
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label>Weight</Label>
+                        <Input
+                          placeholder="Weight/Units"
+                          value={item.weight}
+                          onChange={(e) => {
+                            const updatedGoods = [...challanData.goods];
+                            updatedGoods[index].weight = e.target.value;
+                            setChallanData({...challanData, goods: updatedGoods});
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label>Batch/Lot No.</Label>
+                        <Input
+                          placeholder="Batch number"
+                          value={item.batchNo}
+                          onChange={(e) => {
+                            const updatedGoods = [...challanData.goods];
+                            updatedGoods[index].batchNo = e.target.value;
+                            setChallanData({...challanData, goods: updatedGoods});
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Transport Details */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Transport Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label>Vehicle Number</Label>
+                      <Input
+                        value={challanData.transportDetails.vehicleNumber}
+                        onChange={(e) => setChallanData({
+                          ...challanData, 
+                          transportDetails: {...challanData.transportDetails, vehicleNumber: e.target.value}
+                        })}
+                        placeholder="Truck/Van Number"
+                      />
+                    </div>
+                    <div>
+                      <Label>Driver Name</Label>
+                      <Input
+                        value={challanData.transportDetails.driverName}
+                        onChange={(e) => setChallanData({
+                          ...challanData, 
+                          transportDetails: {...challanData.transportDetails, driverName: e.target.value}
+                        })}
+                        placeholder="Driver Name"
+                      />
+                    </div>
+                    <div>
+                      <Label>Courier Service</Label>
+                      <Input
+                        value={challanData.transportDetails.courierService}
+                        onChange={(e) => setChallanData({
+                          ...challanData, 
+                          transportDetails: {...challanData.transportDetails, courierService: e.target.value}
+                        })}
+                        placeholder="Courier/Delivery Service"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Note: Signature of sender & receiver will be added manually after printing
+                  </p>
+                  <div className="flex gap-3">
+                    <Button onClick={generateDocument} className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Generate Challan
+                    </Button>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Printer className="h-4 w-4" />
+                      Print
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {documentType === "invoice" && (
             <Card>
               <CardHeader>

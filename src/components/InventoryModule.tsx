@@ -17,39 +17,36 @@ interface InventoryItem {
   id: string;
   name: string;
   currentStock: number;
-  lowStockThreshold: number;
   unit: string;
 }
 
 export const InventoryModule = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
-    { id: '1', name: 'Cardboard Boxes', currentStock: 150, lowStockThreshold: 50, unit: 'pieces' },
-    { id: '2', name: 'Plastic Wrapping', currentStock: 25, lowStockThreshold: 30, unit: 'rolls' },
-    { id: '3', name: 'Shipping Labels', currentStock: 200, lowStockThreshold: 100, unit: 'sheets' },
+    { id: '1', name: 'Cardboard Boxes', currentStock: 150, unit: 'pieces' },
+    { id: '2', name: 'Plastic Wrapping', currentStock: 25, unit: 'rolls' },
+    { id: '3', name: 'Shipping Labels', currentStock: 200, unit: 'sheets' },
   ]);
 
   const [newItem, setNewItem] = useState({
     name: "",
     currentStock: "",
-    lowStockThreshold: "",
     unit: ""
   });
 
   const [searchTerm, setSearchTerm] = useState("");
 
   const addItem = () => {
-    if (!newItem.name || !newItem.currentStock || !newItem.lowStockThreshold) return;
+    if (!newItem.name || !newItem.currentStock) return;
     
     const item: InventoryItem = {
       id: Date.now().toString(),
       name: newItem.name,
       currentStock: parseInt(newItem.currentStock),
-      lowStockThreshold: parseInt(newItem.lowStockThreshold),
       unit: newItem.unit || 'units'
     };
 
     setInventoryItems([...inventoryItems, item]);
-    setNewItem({ name: "", currentStock: "", lowStockThreshold: "", unit: "" });
+    setNewItem({ name: "", currentStock: "", unit: "" });
   };
 
   const deleteItem = (id: string) => {
@@ -60,7 +57,7 @@ export const InventoryModule = () => {
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const lowStockItems = inventoryItems.filter(item => item.currentStock <= item.lowStockThreshold);
+  
 
   return (
     <div className="space-y-6">
@@ -76,29 +73,6 @@ export const InventoryModule = () => {
         </CardContent>
       </Card>
 
-      {/* Low Stock Alert */}
-      {lowStockItems.length > 0 && (
-        <Card className="border-destructive bg-destructive/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Low Stock Alert
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {lowStockItems.map(item => (
-                <div key={item.id} className="flex items-center justify-between p-2 bg-background rounded">
-                  <span>{item.name}</span>
-                  <Badge variant="destructive">
-                    {item.currentStock} / {item.lowStockThreshold} {item.unit}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Add New Item */}
       <Card>
@@ -135,16 +109,6 @@ export const InventoryModule = () => {
                 type="number"
                 value={newItem.currentStock}
                 onChange={(e) => setNewItem({...newItem, currentStock: e.target.value})}
-                placeholder="0"
-              />
-            </div>
-            <div>
-              <Label htmlFor="lowStockThreshold">Low Stock Threshold</Label>
-              <Input
-                id="lowStockThreshold"
-                type="number"
-                value={newItem.lowStockThreshold}
-                onChange={(e) => setNewItem({...newItem, lowStockThreshold: e.target.value})}
                 placeholder="0"
               />
             </div>
@@ -190,14 +154,11 @@ export const InventoryModule = () => {
                   <div>
                     <h3 className="font-medium">{item.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Stock: {item.currentStock} {item.unit} • 
-                      Low Stock Alert: {item.lowStockThreshold} {item.unit}
+                      Current Stock: {item.currentStock} {item.unit}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge 
-                      variant={item.currentStock <= item.lowStockThreshold ? "destructive" : "secondary"}
-                    >
+                    <Badge variant="secondary">
                       {item.currentStock} {item.unit}
                     </Badge>
                     <div className="flex gap-1">

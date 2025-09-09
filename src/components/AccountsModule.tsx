@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, 
   Edit, 
@@ -15,7 +16,9 @@ import {
   Building, 
   CreditCard, 
   FileBarChart,
-  Calendar
+  Calendar,
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 
 interface AccountEntry {
@@ -30,7 +33,10 @@ interface AccountEntry {
 export const AccountsModule = () => {
   const [salesEntries, setSalesEntries] = useState<AccountEntry[]>([]);
   const [purchaseEntries, setPurchaseEntries] = useState<AccountEntry[]>([]);
+  const [monthlyExpenseEntries, setMonthlyExpenseEntries] = useState<AccountEntry[]>([]);
   const [expenseEntries, setExpenseEntries] = useState<AccountEntry[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  const [currentYear] = useState<number>(new Date().getFullYear());
   
   const [newEntry, setNewEntry] = useState({
     description: "",
@@ -40,7 +46,13 @@ export const AccountsModule = () => {
     status: ""
   });
 
-  const addEntry = (type: 'sales' | 'purchase' | 'expense') => {
+  const [profitLoss, setProfitLoss] = useState({
+    totalSales: 0,
+    totalExpenses: 0,
+    netProfitLoss: 0
+  });
+
+  const addEntry = (type: 'sales' | 'purchase' | 'monthly-expense' | 'expense') => {
     if (!newEntry.description || !newEntry.amount) return;
     
     const entry: AccountEntry = {
@@ -56,6 +68,8 @@ export const AccountsModule = () => {
       setSalesEntries([...salesEntries, entry]);
     } else if (type === 'purchase') {
       setPurchaseEntries([...purchaseEntries, entry]);
+    } else if (type === 'monthly-expense') {
+      setMonthlyExpenseEntries([...monthlyExpenseEntries, entry]);
     } else {
       setExpenseEntries([...expenseEntries, entry]);
     }
@@ -67,6 +81,43 @@ export const AccountsModule = () => {
       category: "",
       status: ""
     });
+    calculateProfitLoss();
+  };
+
+  const deleteEntry = (type: 'sales' | 'purchase' | 'monthly-expense' | 'expense', id: string) => {
+    if (type === 'sales') {
+      setSalesEntries(salesEntries.filter(entry => entry.id !== id));
+    } else if (type === 'purchase') {
+      setPurchaseEntries(purchaseEntries.filter(entry => entry.id !== id));
+    } else if (type === 'monthly-expense') {
+      setMonthlyExpenseEntries(monthlyExpenseEntries.filter(entry => entry.id !== id));
+    } else {
+      setExpenseEntries(expenseEntries.filter(entry => entry.id !== id));
+    }
+    calculateProfitLoss();
+  };
+
+  const calculateProfitLoss = () => {
+    const totalSales = salesEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const totalMonthlyExpenses = monthlyExpenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const totalAllExpenses = totalMonthlyExpenses + totalExpenses;
+    
+    setProfitLoss({
+      totalSales,
+      totalExpenses: totalAllExpenses,
+      netProfitLoss: totalSales - totalAllExpenses
+    });
+  };
+
+  useEffect(() => {
+    calculateProfitLoss();
+  }, [salesEntries, monthlyExpenseEntries, expenseEntries]);
+
+  const getMonthName = (monthNum: number) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[monthNum - 1];
   };
 
   const EntryForm = ({ type, onAdd }: { type: string; onAdd: () => void }) => (
@@ -139,7 +190,17 @@ export const AccountsModule = () => {
     </Card>
   );
 
-  const EntryList = ({ entries, title, icon }: { entries: AccountEntry[]; title: string; icon: React.ReactNode }) => (
+  const EntryList = ({ 
+    entries, 
+    title, 
+    icon, 
+    type 
+  }: { 
+    entries: AccountEntry[]; 
+    title: string; 
+    icon: React.ReactNode;
+    type: 'sales' | 'purchase' | 'monthly-expense' | 'expense';
+  }) => (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -171,7 +232,11 @@ export const AccountsModule = () => {
                     <Button variant="ghost" size="sm">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => deleteEntry(type, entry.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -203,7 +268,7 @@ export const AccountsModule = () => {
       </Card>
 
       <Tabs defaultValue="sales" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="sales" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
             Sales
@@ -211,6 +276,10 @@ export const AccountsModule = () => {
           <TabsTrigger value="purchases" className="flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
             Purchases
+          </TabsTrigger>
+          <TabsTrigger value="monthly-expenses" className="flex items-center gap-2">
+            <Receipt className="h-4 w-4" />
+            Monthly Expenses
           </TabsTrigger>
           <TabsTrigger value="expenses" className="flex items-center gap-2">
             <Receipt className="h-4 w-4" />
@@ -235,16 +304,76 @@ export const AccountsModule = () => {
           <EntryList 
             entries={salesEntries} 
             title="Sales Records" 
-            icon={<DollarSign className="h-5 w-5" />} 
+            icon={<DollarSign className="h-5 w-5" />}
+            type="sales"
           />
         </TabsContent>
 
         <TabsContent value="purchases" className="space-y-6">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Monthly Purchases - {getMonthName(selectedMonth)} {currentYear}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 mb-4">
+                <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Month {i + 1} - {getMonthName(i + 1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
           <EntryForm type="Purchase" onAdd={() => addEntry('purchase')} />
           <EntryList 
             entries={purchaseEntries} 
             title="Purchase Records" 
-            icon={<ShoppingCart className="h-5 w-5" />} 
+            icon={<ShoppingCart className="h-5 w-5" />}
+            type="purchase"
+          />
+        </TabsContent>
+
+        <TabsContent value="monthly-expenses" className="space-y-6">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Monthly Expenses - {getMonthName(selectedMonth)} {currentYear}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 mb-4">
+                <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Month {i + 1} - {getMonthName(i + 1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+          <EntryForm type="Monthly Expense" onAdd={() => addEntry('monthly-expense')} />
+          <EntryList 
+            entries={monthlyExpenseEntries} 
+            title="Monthly Expense Records" 
+            icon={<Receipt className="h-5 w-5" />}
+            type="monthly-expense"
           />
         </TabsContent>
 
@@ -252,8 +381,9 @@ export const AccountsModule = () => {
           <EntryForm type="Expense" onAdd={() => addEntry('expense')} />
           <EntryList 
             entries={expenseEntries} 
-            title="Expense Records" 
-            icon={<Receipt className="h-5 w-5" />} 
+            title="General Expense Records" 
+            icon={<Receipt className="h-5 w-5" />}
+            type="expense"
           />
         </TabsContent>
 
@@ -299,6 +429,49 @@ export const AccountsModule = () => {
         </TabsContent>
 
         <TabsContent value="banking" className="space-y-6">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {profitLoss.netProfitLoss >= 0 ? (
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                ) : (
+                  <TrendingDown className="h-5 w-5 text-red-500" />
+                )}
+                Profit & Loss Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
+                  <Label className="text-green-700 dark:text-green-300">Total Sales</Label>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                    ${profitLoss.totalSales.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-900/20">
+                  <Label className="text-red-700 dark:text-red-300">Total Expenses</Label>
+                  <p className="text-2xl font-bold text-red-700 dark:text-red-300">
+                    ${profitLoss.totalExpenses.toFixed(2)}
+                  </p>
+                </div>
+                <div className={`p-4 border rounded-lg ${profitLoss.netProfitLoss >= 0 
+                  ? 'bg-green-50 dark:bg-green-900/20' 
+                  : 'bg-red-50 dark:bg-red-900/20'}`}>
+                  <Label className={profitLoss.netProfitLoss >= 0 
+                    ? 'text-green-700 dark:text-green-300' 
+                    : 'text-red-700 dark:text-red-300'}>
+                    Net {profitLoss.netProfitLoss >= 0 ? 'Profit' : 'Loss'}
+                  </Label>
+                  <p className={`text-2xl font-bold ${profitLoss.netProfitLoss >= 0 
+                    ? 'text-green-700 dark:text-green-300' 
+                    : 'text-red-700 dark:text-red-300'}`}>
+                    ${Math.abs(profitLoss.netProfitLoss).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -307,17 +480,13 @@ export const AccountsModule = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 border rounded-lg">
                   <Label>Cash in Hand</Label>
                   <Input placeholder="0.00" className="mt-2" />
                 </div>
                 <div className="p-4 border rounded-lg">
                   <Label>Bank Balance</Label>
-                  <Input placeholder="0.00" className="mt-2" />
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <Label>Pending Receivables</Label>
                   <Input placeholder="0.00" className="mt-2" />
                 </div>
               </div>
