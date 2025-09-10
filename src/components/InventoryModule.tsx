@@ -17,20 +17,18 @@ interface InventoryItem {
   id: string;
   name: string;
   currentStock: number;
-  unit: string;
 }
 
 export const InventoryModule = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
-    { id: '1', name: 'Cardboard Boxes', currentStock: 150, unit: 'pieces' },
-    { id: '2', name: 'Plastic Wrapping', currentStock: 25, unit: 'rolls' },
-    { id: '3', name: 'Shipping Labels', currentStock: 200, unit: 'sheets' },
+    { id: '1', name: 'Cardboard Boxes', currentStock: 150 },
+    { id: '2', name: 'Plastic Wrapping', currentStock: 25 },
+    { id: '3', name: 'Shipping Labels', currentStock: 200 },
   ]);
 
   const [newItem, setNewItem] = useState({
     name: "",
-    currentStock: "",
-    unit: ""
+    currentStock: ""
   });
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,16 +39,17 @@ export const InventoryModule = () => {
     const item: InventoryItem = {
       id: Date.now().toString(),
       name: newItem.name,
-      currentStock: parseInt(newItem.currentStock),
-      unit: newItem.unit || 'units'
+      currentStock: parseInt(newItem.currentStock)
     };
 
     setInventoryItems([...inventoryItems, item]);
-    setNewItem({ name: "", currentStock: "", unit: "" });
+    setNewItem({ name: "", currentStock: "" });
   };
 
   const deleteItem = (id: string) => {
-    setInventoryItems(inventoryItems.filter(item => item.id !== id));
+    if (confirm('Are you sure you want to delete this item?')) {
+      setInventoryItems(inventoryItems.filter(item => item.id !== id));
+    }
   };
 
   const filteredItems = inventoryItems.filter(item =>
@@ -91,15 +90,6 @@ export const InventoryModule = () => {
                 value={newItem.name}
                 onChange={(e) => setNewItem({...newItem, name: e.target.value})}
                 placeholder="Enter product name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="unit">Unit</Label>
-              <Input
-                id="unit"
-                value={newItem.unit}
-                onChange={(e) => setNewItem({...newItem, unit: e.target.value})}
-                placeholder="pieces, kg, liters, etc."
               />
             </div>
             <div>
@@ -154,12 +144,12 @@ export const InventoryModule = () => {
                   <div>
                     <h3 className="font-medium">{item.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Current Stock: {item.currentStock} {item.unit}
+                      Current Stock: {item.currentStock}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="secondary">
-                      {item.currentStock} {item.unit}
+                      {item.currentStock}
                     </Badge>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm">

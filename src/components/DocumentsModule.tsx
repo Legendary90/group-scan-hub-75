@@ -47,17 +47,14 @@ interface ChallanData {
   senderAddress: string;
   receiverName: string;
   receiverAddress: string;
-  goods: Array<{
-    description: string;
-    quantity: number;
-    weight: string;
-    batchNo: string;
-  }>;
-  transportDetails: {
-    vehicleNumber: string;
-    driverName: string;
-    courierService: string;
-  };
+  goodsDescription: string;
+  batchNumber: string;
+  quantity: string;
+  weight: string;
+  units: string;
+  truckNumber: string;
+  driverName: string;
+  courierService: string;
 }
 
 export const DocumentsModule = () => {
@@ -90,12 +87,14 @@ export const DocumentsModule = () => {
     senderAddress: "",
     receiverName: "",
     receiverAddress: "",
-    goods: [{ description: "", quantity: 0, weight: "", batchNo: "" }],
-    transportDetails: {
-      vehicleNumber: "",
-      driverName: "",
-      courierService: ""
-    }
+    goodsDescription: "",
+    batchNumber: "",
+    quantity: "",
+    weight: "",
+    units: "",
+    truckNumber: "",
+    driverName: "",
+    courierService: ""
   });
 
   const addProduct = () => {

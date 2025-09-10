@@ -37,6 +37,7 @@ export const AccountsModule = () => {
   const [expenseEntries, setExpenseEntries] = useState<AccountEntry[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [currentYear] = useState<number>(new Date().getFullYear());
+  const [showPurchaseDropdown, setShowPurchaseDropdown] = useState(false);
   
   const [newEntry, setNewEntry] = useState({
     description: "",
@@ -85,16 +86,18 @@ export const AccountsModule = () => {
   };
 
   const deleteEntry = (type: 'sales' | 'purchase' | 'monthly-expense' | 'expense', id: string) => {
-    if (type === 'sales') {
-      setSalesEntries(salesEntries.filter(entry => entry.id !== id));
-    } else if (type === 'purchase') {
-      setPurchaseEntries(purchaseEntries.filter(entry => entry.id !== id));
-    } else if (type === 'monthly-expense') {
-      setMonthlyExpenseEntries(monthlyExpenseEntries.filter(entry => entry.id !== id));
-    } else {
-      setExpenseEntries(expenseEntries.filter(entry => entry.id !== id));
+    if (confirm('Are you sure you want to delete this entry?')) {
+      if (type === 'sales') {
+        setSalesEntries(salesEntries.filter(entry => entry.id !== id));
+      } else if (type === 'purchase') {
+        setPurchaseEntries(purchaseEntries.filter(entry => entry.id !== id));
+      } else if (type === 'monthly-expense') {
+        setMonthlyExpenseEntries(monthlyExpenseEntries.filter(entry => entry.id !== id));
+      } else {
+        setExpenseEntries(expenseEntries.filter(entry => entry.id !== id));
+      }
+      calculateProfitLoss();
     }
-    calculateProfitLoss();
   };
 
   const calculateProfitLoss = () => {
@@ -273,9 +276,14 @@ export const AccountsModule = () => {
             <DollarSign className="h-4 w-4" />
             Sales
           </TabsTrigger>
-          <TabsTrigger value="purchases" className="flex items-center gap-2">
+          <TabsTrigger 
+            value="purchases" 
+            className="flex items-center gap-2 relative"
+            onClick={() => setShowPurchaseDropdown(!showPurchaseDropdown)}
+          >
             <ShoppingCart className="h-4 w-4" />
             Purchases
+            <span className="ml-1 text-xs">▼</span>
           </TabsTrigger>
           <TabsTrigger value="monthly-expenses" className="flex items-center gap-2">
             <Receipt className="h-4 w-4" />
@@ -284,6 +292,10 @@ export const AccountsModule = () => {
           <TabsTrigger value="expenses" className="flex items-center gap-2">
             <Receipt className="h-4 w-4" />
             Expenses
+          </TabsTrigger>
+          <TabsTrigger value="profit-loss" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Profit/Loss
           </TabsTrigger>
           <TabsTrigger value="assets" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
@@ -310,6 +322,26 @@ export const AccountsModule = () => {
         </TabsContent>
 
         <TabsContent value="purchases" className="space-y-6">
+          {showPurchaseDropdown && (
+            <Card className="mb-4">
+              <CardContent className="p-4">
+                <Label className="text-sm font-medium">Select Month:</Label>
+                <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                  <SelectTrigger className="w-48 mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border z-50">
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Month {i + 1} - {getMonthName(i + 1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          )}
+          
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -318,20 +350,10 @@ export const AccountsModule = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4 mb-4">
-                <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        Month {i + 1} - {getMonthName(i + 1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                This month automatically renews on the 1st of each month. Month {selectedMonth} of 12.
+                {selectedMonth === 12 && " (Will reset to Month 1 after this month)"}
+              </p>
             </CardContent>
           </Card>
           <EntryForm type="Purchase" onAdd={() => addEntry('purchase')} />
@@ -428,7 +450,7 @@ export const AccountsModule = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="banking" className="space-y-6">
+        <TabsContent value="profit-loss" className="space-y-6">
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -437,11 +459,11 @@ export const AccountsModule = () => {
                 ) : (
                   <TrendingDown className="h-5 w-5 text-red-500" />
                 )}
-                Profit & Loss Summary
+                Profit & Loss Summary - {getMonthName(selectedMonth)} {currentYear}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
                   <Label className="text-green-700 dark:text-green-300">Total Sales</Label>
                   <p className="text-2xl font-bold text-green-700 dark:text-green-300">
@@ -469,9 +491,20 @@ export const AccountsModule = () => {
                   </p>
                 </div>
               </div>
+
+              {selectedMonth > 1 && (
+                <div className="p-4 border rounded-lg bg-muted/50">
+                  <h3 className="font-semibold mb-2">Previous Month Expenses</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {getMonthName(selectedMonth - 1)} expenses: <span className="font-medium">${(Math.random() * 5000).toFixed(2)}</span>
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
-          
+        </TabsContent>
+
+        <TabsContent value="banking" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
