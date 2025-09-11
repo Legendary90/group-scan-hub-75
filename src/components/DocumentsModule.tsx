@@ -55,6 +55,17 @@ interface ChallanData {
   truckNumber: string;
   driverName: string;
   courierService: string;
+  goods: Array<{
+    name: string;
+    batchNumber: string;
+    quantity: string;
+    weight: string;
+  }>;
+  transportDetails: {
+    truckNumber: string;
+    driverName: string;
+    courierService: string;
+  };
 }
 
 export const DocumentsModule = () => {
@@ -94,7 +105,13 @@ export const DocumentsModule = () => {
     units: "",
     truckNumber: "",
     driverName: "",
-    courierService: ""
+    courierService: "",
+    goods: [{ name: "", batchNumber: "", quantity: "", weight: "" }],
+    transportDetails: {
+      truckNumber: "",
+      driverName: "",
+      courierService: ""
+    }
   });
 
   const addProduct = () => {
@@ -305,92 +322,91 @@ export const DocumentsModule = () => {
 
                 {/* Goods Details */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Description of Goods</h3>
-                    <Button 
-                      onClick={() => {
-                        setChallanData({
-                          ...challanData,
-                          goods: [...challanData.goods, { description: "", quantity: 0, weight: "", batchNo: "" }]
-                        });
-                      }} 
-                      variant="outline" 
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Item
-                    </Button>
-                  </div>
+                   <div className="flex items-center justify-between">
+                     <h3 className="font-semibold">Description of Goods</h3>
+                     <Button 
+                       onClick={() => {
+                         setChallanData({
+                           ...challanData,
+                           goods: [...challanData.goods, { name: "", batchNumber: "", quantity: "", weight: "" }]
+                         });
+                       }} 
+                       variant="outline" 
+                       size="sm"
+                     >
+                       <Plus className="h-4 w-4 mr-1" />
+                       Add Item
+                     </Button>
+                   </div>
 
-                  {challanData.goods.map((item, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 border rounded">
-                      <div>
-                        <Label>Product Description</Label>
-                        <Input
-                          placeholder="Product name"
-                          value={item.description}
-                          onChange={(e) => {
-                            const updatedGoods = [...challanData.goods];
-                            updatedGoods[index].description = e.target.value;
-                            setChallanData({...challanData, goods: updatedGoods});
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label>Quantity/Units</Label>
-                        <Input
-                          type="number"
-                          placeholder="Qty"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const updatedGoods = [...challanData.goods];
-                            updatedGoods[index].quantity = parseInt(e.target.value) || 0;
-                            setChallanData({...challanData, goods: updatedGoods});
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label>Weight</Label>
-                        <Input
-                          placeholder="Weight/Units"
-                          value={item.weight}
-                          onChange={(e) => {
-                            const updatedGoods = [...challanData.goods];
-                            updatedGoods[index].weight = e.target.value;
-                            setChallanData({...challanData, goods: updatedGoods});
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label>Batch/Lot No.</Label>
-                        <Input
-                          placeholder="Batch number"
-                          value={item.batchNo}
-                          onChange={(e) => {
-                            const updatedGoods = [...challanData.goods];
-                            updatedGoods[index].batchNo = e.target.value;
-                            setChallanData({...challanData, goods: updatedGoods});
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                   {challanData.goods.map((item, index) => (
+                     <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 border rounded">
+                       <div>
+                         <Label>Product Description</Label>
+                         <Input
+                           placeholder="Product name"
+                           value={item.name}
+                           onChange={(e) => {
+                             const updatedGoods = [...challanData.goods];
+                             updatedGoods[index].name = e.target.value;
+                             setChallanData({...challanData, goods: updatedGoods});
+                           }}
+                         />
+                       </div>
+                       <div>
+                         <Label>Quantity/Units</Label>
+                         <Input
+                           placeholder="Qty"
+                           value={item.quantity}
+                           onChange={(e) => {
+                             const updatedGoods = [...challanData.goods];
+                             updatedGoods[index].quantity = e.target.value;
+                             setChallanData({...challanData, goods: updatedGoods});
+                           }}
+                         />
+                       </div>
+                       <div>
+                         <Label>Weight</Label>
+                         <Input
+                           placeholder="Weight/Units"
+                           value={item.weight}
+                           onChange={(e) => {
+                             const updatedGoods = [...challanData.goods];
+                             updatedGoods[index].weight = e.target.value;
+                             setChallanData({...challanData, goods: updatedGoods});
+                           }}
+                         />
+                       </div>
+                       <div>
+                         <Label>Batch/Lot No.</Label>
+                         <Input
+                           placeholder="Batch number"
+                           value={item.batchNumber}
+                           onChange={(e) => {
+                             const updatedGoods = [...challanData.goods];
+                             updatedGoods[index].batchNumber = e.target.value;
+                             setChallanData({...challanData, goods: updatedGoods});
+                           }}
+                         />
+                       </div>
+                     </div>
+                   ))}
+                 </div>
 
-                {/* Transport Details */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Transport Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label>Vehicle Number</Label>
-                      <Input
-                        value={challanData.transportDetails.vehicleNumber}
-                        onChange={(e) => setChallanData({
-                          ...challanData, 
-                          transportDetails: {...challanData.transportDetails, vehicleNumber: e.target.value}
-                        })}
-                        placeholder="Truck/Van Number"
-                      />
+                 {/* Transport Details */}
+                 <div className="space-y-4">
+                   <h3 className="font-semibold">Transport Details</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div>
+                       <Label>Vehicle Number</Label>
+                       <Input
+                         value={challanData.transportDetails.truckNumber}
+                         onChange={(e) => setChallanData({
+                           ...challanData, 
+                           transportDetails: {...challanData.transportDetails, truckNumber: e.target.value}
+                         })}
+                         placeholder="Truck/Van Number"
+                       />
                     </div>
                     <div>
                       <Label>Driver Name</Label>
