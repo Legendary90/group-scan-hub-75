@@ -5,7 +5,7 @@ export interface AuthUser {
   username: string;
   company_name: string;
   subscription_status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-  access_status: boolean;
+  access_status: 'ACTIVE' | 'STOPPED';
 }
 
 // Client authentication
@@ -28,7 +28,7 @@ export const authenticateClient = async (username: string, password: string): Pr
     }
 
     // Check subscription status
-    if (data.subscription_status !== 'ACTIVE' || !data.access_status) {
+    if (data.subscription_status !== 'ACTIVE' || data.access_status !== 'ACTIVE') {
       return { user: null, error: 'Your subscription has expired or access has been suspended. Please contact administrator.' };
     }
 
@@ -121,7 +121,7 @@ export const checkSubscriptionStatus = async (client_id: string): Promise<{ acti
       return { active: false, error: 'Subscription expired' };
     }
 
-    const active = data.subscription_status === 'ACTIVE' && data.access_status;
+    const active = data.subscription_status === 'ACTIVE' && data.access_status === 'ACTIVE';
     return { active, error: active ? null : 'Access denied' };
   } catch (error) {
     return { active: false, error: 'Subscription check failed' };

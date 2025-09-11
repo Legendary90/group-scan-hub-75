@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { LogIn, UserPlus, Building } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export const LoginForm = () => {
   const { login, register } = useAuth();
@@ -20,8 +20,8 @@ export const LoginForm = () => {
   const [registerData, setRegisterData] = useState({
     username: '',
     password: '',
-    company_name: '',
-    contact_person: '',
+    companyName: '',
+    contactPerson: '',
     email: '',
     phone: ''
   });
@@ -29,7 +29,11 @@ export const LoginForm = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.username || !loginData.password) {
-      toast.error('Please fill in all required fields');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all required fields",
+      });
       return;
     }
 
@@ -37,35 +41,60 @@ export const LoginForm = () => {
     const result = await login(loginData.username, loginData.password);
     
     if (result.success) {
-      toast.success('Login successful!');
+      toast({
+        title: "Success",
+        description: "Login successful!",
+      });
     } else {
-      toast.error(result.error || 'Login failed');
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: result.error,
+      });
     }
     setIsLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registerData.username || !registerData.password || !registerData.company_name) {
-      toast.error('Please fill in all required fields');
+    if (!registerData.companyName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Company Name Required",
+        description: "Please enter your company name as your username",
+      });
       return;
     }
-
+    
     setIsLoading(true);
-    const result = await register(registerData);
+    const result = await register({
+      username: registerData.companyName, // Use company name as username
+      password: registerData.password,
+      company_name: registerData.companyName,
+      contact_person: registerData.contactPerson,
+      email: registerData.email,
+      phone: registerData.phone,
+    });
     
     if (result.success) {
-      toast.success(`Registration successful! Your Client ID is: ${result.client_id}`);
+      toast({
+        title: "Registration successful!",
+        description: `Your client ID is: ${result.client_id}. Use your company name as username to login.`,
+      });
       setRegisterData({
-        username: '',
-        password: '',
-        company_name: '',
-        contact_person: '',
-        email: '',
-        phone: ''
+        username: "",
+        password: "",
+        companyName: "",
+        contactPerson: "",
+        email: "",
+        phone: "",
       });
     } else {
-      toast.error(result.error || 'Registration failed');
+      toast({
+        variant: "destructive",
+        title: "Registration failed",
+        description: result.error,
+      });
     }
     setIsLoading(false);
   };
@@ -96,12 +125,12 @@ export const LoginForm = () => {
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">Company Name (Username)</Label>
                   <Input
                     id="username"
                     value={loginData.username}
                     onChange={(e) => setLoginData({...loginData, username: e.target.value})}
-                    placeholder="Enter your username"
+                    placeholder="Enter your company name"
                     required
                   />
                 </div>
@@ -125,12 +154,12 @@ export const LoginForm = () => {
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div>
-                  <Label htmlFor="reg-username">Username *</Label>
+                  <Label htmlFor="company-name">Company Name (This will be your username) *</Label>
                   <Input
-                    id="reg-username"
-                    value={registerData.username}
-                    onChange={(e) => setRegisterData({...registerData, username: e.target.value})}
-                    placeholder="Choose a username"
+                    id="company-name"
+                    value={registerData.companyName}
+                    onChange={(e) => setRegisterData({...registerData, companyName: e.target.value, username: e.target.value})}
+                    placeholder="Your company name"
                     required
                   />
                 </div>
@@ -146,21 +175,11 @@ export const LoginForm = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="company-name">Company Name *</Label>
-                  <Input
-                    id="company-name"
-                    value={registerData.company_name}
-                    onChange={(e) => setRegisterData({...registerData, company_name: e.target.value})}
-                    placeholder="Your company name"
-                    required
-                  />
-                </div>
-                <div>
                   <Label htmlFor="contact-person">Contact Person</Label>
                   <Input
                     id="contact-person"
-                    value={registerData.contact_person}
-                    onChange={(e) => setRegisterData({...registerData, contact_person: e.target.value})}
+                    value={registerData.contactPerson}
+                    onChange={(e) => setRegisterData({...registerData, contactPerson: e.target.value})}
                     placeholder="Contact person name"
                   />
                 </div>

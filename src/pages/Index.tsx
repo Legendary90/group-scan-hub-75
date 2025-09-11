@@ -1,5 +1,6 @@
 import Dashboard from "@/components/Dashboard";
 import { LoginForm } from "@/components/LoginForm";
+import { SubscriptionExpired } from "@/components/SubscriptionExpired";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
@@ -18,6 +19,11 @@ const Index = () => {
 
   if (!user) {
     return <LoginForm />;
+  }
+
+  // Check if subscription is expired or access is stopped
+  if (user.subscription_status === 'INACTIVE' || user.access_status === 'STOPPED') {
+    return <SubscriptionExpired />;
   }
 
   return <Dashboard />;
