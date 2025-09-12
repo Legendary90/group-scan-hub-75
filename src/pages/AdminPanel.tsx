@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 import { 
   Users, 
   Settings, 
@@ -15,103 +17,271 @@ import {
   Trash2,
   Search,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
 
 interface Client {
   id: string;
-  clientId: string;
-  companyName: string;
-  contactEmail: string;
-  subscriptionStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-  subscriptionEnd: string;
-  createdDate: string;
-  lastLogin: string;
+  client_id: string;
+  username: string;
+  company_name: string;
+  email?: string;
+  contact_person?: string;
+  phone?: string;
+  subscription_status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  access_status: 'ACTIVE' | 'STOPPED';
+  subscription_start: string;
+  subscription_end: string;
+  created_at: string;
+  last_login?: string;
 }
 
 const AdminPanel = () => {
-  const [clients, setClients] = useState<Client[]>([
-    {
-      id: '1',
-      clientId: 'CLI_001',
-      companyName: 'ABC Manufacturing',
-      contactEmail: 'admin@abc.com',
-      subscriptionStatus: 'ACTIVE',
-      subscriptionEnd: '2025-01-15',
-      createdDate: '2024-01-15',
-      lastLogin: '2024-11-08'
-    },
-    {
-      id: '2',
-      clientId: 'CLI_002', 
-      companyName: 'XYZ Exports',
-      contactEmail: 'manager@xyz.com',
-      subscriptionStatus: 'INACTIVE',
-      subscriptionEnd: '2024-10-30',
-      createdDate: '2024-05-20',
-      lastLogin: '2024-10-25'
-    }
-  ]);
-
-  const [newClient, setNewClient] = useState({
-    clientId: '',
-    companyName: '',
-    contactEmail: '',
-    subscriptionEnd: ''
-  });
-
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [newClient, setNewClient] = useState({
+    username: '',
+    password: '',
+    company_name: '',
+    contact_person: '',
+    email: '',
+    phone: '',
+    subscription_end: ''
+  });
+  
+  const { toast } = useToast();
 
-  const generateClientId = () => {
-    const id = 'CLI_' + String(Date.now()).slice(-6);
-    setNewClient({...newClient, clientId: id});
+  // Fetch all clients from database
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch clients from database",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addClient = () => {
-    if (!newClient.clientId || !newClient.companyName || !newClient.contactEmail) return;
-    
-    const client: Client = {
-      id: Date.now().toString(),
-      clientId: newClient.clientId,
-      companyName: newClient.companyName,
-      contactEmail: newClient.contactEmail,
-      subscriptionStatus: 'ACTIVE',
-      subscriptionEnd: newClient.subscriptionEnd || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      createdDate: new Date().toISOString().split('T')[0],
-      lastLogin: 'Never'
-    };
+  // Load clients on component mount
+  useEffect(() => {
+    fetchClients();
+  }, []);
 
-    setClients([...clients, client]);
-    setNewClient({ clientId: '', companyName: '', contactEmail: '', subscriptionEnd: '' });
+  // Add new client
+  const addClient = async () => {
+    if (!newClient.username || !newClient.password || !newClient.company_name) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields (username, password, company name)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const client_id = 'CLI_' + Date.now().toString().slice(-8);
+      const subscription_end = newClient.subscription_end || 
+        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      const { error } = await supabase
+        .from('clients')
+        .insert([{
+          client_id,
+          username: newClient.username,
+          password_hash: newClient.password, // In production, this should be hashed
+          company_name: newClient.company_name,
+          contact_person: newClient.contact_person,
+          email: newClient.email,
+          phone: newClient.phone,
+          subscription_status: 'ACTIVE',
+          access_status: 'ACTIVE',
+          subscription_start: new Date().toISOString().split('T')[0],
+          subscription_end
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Client added successfully"
+      });
+
+      // Refresh client list and reset form
+      await fetchClients();
+      setNewClient({
+        username: '',
+        password: '',
+        company_name: '',
+        contact_person: '',
+        email: '',
+        phone: '',
+        subscription_end: ''
+      });
+    } catch (error) {
+      console.error('Error adding client:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add client. Username might already exist.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const toggleSubscription = (clientId: string) => {
-    setClients(clients.map(client => 
-      client.id === clientId 
-        ? { ...client, subscriptionStatus: client.subscriptionStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' }
-        : client
-    ));
+  // Toggle subscription status
+  const toggleSubscription = async (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const newStatus = client.subscription_status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({ 
+          subscription_status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Client subscription ${newStatus.toLowerCase()}`
+      });
+
+      await fetchClients();
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update subscription status",
+        variant: "destructive"
+      });
+    }
   };
 
-  const deleteClient = (clientId: string) => {
-    if (confirm('Are you sure you want to delete this client?')) {
-      setClients(clients.filter(client => client.id !== clientId));
+  // Toggle access status
+  const toggleAccess = async (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const newAccess = client.access_status === 'ACTIVE' ? 'STOPPED' : 'ACTIVE';
+
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({ 
+          access_status: newAccess,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Client access ${newAccess.toLowerCase()}`
+      });
+
+      await fetchClients();
+    } catch (error) {
+      console.error('Error updating access:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update access status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Update subscription end date
+  const updateSubscriptionEnd = async (clientId: string, newEndDate: string) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({ 
+          subscription_end: newEndDate,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Subscription end date updated"
+      });
+
+      await fetchClients();
+    } catch (error) {
+      console.error('Error updating subscription end:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update subscription end date",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Delete client
+  const deleteClient = async (clientId: string) => {
+    if (!confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Client deleted successfully"
+      });
+
+      await fetchClients();
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete client",
+        variant: "destructive"
+      });
     }
   };
 
   const filteredClients = clients.filter(client =>
-    client.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.clientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())
+    client.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.client_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const activeClients = clients.filter(c => c.subscriptionStatus === 'ACTIVE').length;
-  const inactiveClients = clients.filter(c => c.subscriptionStatus === 'INACTIVE').length;
+  const activeClients = clients.filter(c => c.subscription_status === 'ACTIVE' && c.access_status === 'ACTIVE').length;
+  const inactiveClients = clients.filter(c => c.subscription_status === 'INACTIVE' || c.access_status === 'STOPPED').length;
   const expiringSoon = clients.filter(c => {
-    const endDate = new Date(c.subscriptionEnd);
+    const endDate = new Date(c.subscription_end);
     const now = new Date();
     const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+    return daysUntilExpiry <= 30 && daysUntilExpiry > 0 && c.subscription_status === 'ACTIVE';
   }).length;
 
   return (
@@ -119,7 +289,7 @@ const AdminPanel = () => {
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-3">
                 <Shield className="h-8 w-8 text-blue-400" />
@@ -127,9 +297,25 @@ const AdminPanel = () => {
               </h1>
               <p className="text-slate-400 mt-1">Inventory Management System - Administration</p>
             </div>
-            <Badge variant="outline" className="text-green-400 border-green-400">
-              System Online
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={fetchClients}
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
+              </Button>
+              <Badge variant="outline" className="text-green-400 border-green-400">
+                System Online
+              </Badge>
+            </div>
           </div>
 
           {/* Quick Stats */}
@@ -219,42 +405,63 @@ const AdminPanel = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
-                    <Label className="text-slate-300">Client ID</Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input
-                        value={newClient.clientId}
-                        onChange={(e) => setNewClient({...newClient, clientId: e.target.value})}
-                        placeholder="CLI_XXXXXX"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                      <Button 
-                        onClick={generateClientId}
-                        variant="outline"
-                        size="sm"
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                      >
-                        Generate
-                      </Button>
-                    </div>
+                    <Label className="text-slate-300">Username *</Label>
+                    <Input
+                      value={newClient.username}
+                      onChange={(e) => setNewClient({...newClient, username: e.target.value})}
+                      placeholder="Enter username (suggest company name)"
+                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      required
+                    />
                   </div>
                   <div>
-                    <Label className="text-slate-300">Company Name</Label>
+                    <Label className="text-slate-300">Password *</Label>
                     <Input
-                      value={newClient.companyName}
-                      onChange={(e) => setNewClient({...newClient, companyName: e.target.value})}
+                      type="password"
+                      value={newClient.password}
+                      onChange={(e) => setNewClient({...newClient, password: e.target.value})}
+                      placeholder="Enter password"
+                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Company Name *</Label>
+                    <Input
+                      value={newClient.company_name}
+                      onChange={(e) => setNewClient({...newClient, company_name: e.target.value})}
                       placeholder="Company Name"
+                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Contact Person</Label>
+                    <Input
+                      value={newClient.contact_person}
+                      onChange={(e) => setNewClient({...newClient, contact_person: e.target.value})}
+                      placeholder="Contact Person"
                       className="bg-slate-700 border-slate-600 text-white mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-300">Contact Email</Label>
+                    <Label className="text-slate-300">Email</Label>
                     <Input
                       type="email"
-                      value={newClient.contactEmail}
-                      onChange={(e) => setNewClient({...newClient, contactEmail: e.target.value})}
+                      value={newClient.email}
+                      onChange={(e) => setNewClient({...newClient, email: e.target.value})}
                       placeholder="admin@company.com"
+                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Phone</Label>
+                    <Input
+                      value={newClient.phone}
+                      onChange={(e) => setNewClient({...newClient, phone: e.target.value})}
+                      placeholder="Phone Number"
                       className="bg-slate-700 border-slate-600 text-white mt-1"
                     />
                   </div>
@@ -262,10 +469,11 @@ const AdminPanel = () => {
                     <Label className="text-slate-300">Subscription End</Label>
                     <Input
                       type="date"
-                      value={newClient.subscriptionEnd}
-                      onChange={(e) => setNewClient({...newClient, subscriptionEnd: e.target.value})}
+                      value={newClient.subscription_end}
+                      onChange={(e) => setNewClient({...newClient, subscription_end: e.target.value})}
                       className="bg-slate-700 border-slate-600 text-white mt-1"
                     />
+                    <p className="text-xs text-slate-400 mt-1">Leave empty for 1 year default</p>
                   </div>
                 </div>
                 <Button 
@@ -302,33 +510,58 @@ const AdminPanel = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {filteredClients.length === 0 ? (
-                  <p className="text-slate-400 text-center py-8">No clients found</p>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                    <span className="ml-2 text-slate-400">Loading clients...</span>
+                  </div>
+                ) : filteredClients.length === 0 ? (
+                  <p className="text-slate-400 text-center py-8">
+                    {searchTerm ? 'No clients found matching your search' : 'No clients registered yet'}
+                  </p>
                 ) : (
                   <div className="space-y-3">
                     {filteredClients.map((client) => (
-                      <div key={client.id} className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg border border-slate-600">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-medium text-white">{client.companyName}</h3>
+                      <div key={client.id} className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <h3 className="font-medium text-white">{client.company_name}</h3>
                             <Badge 
-                              variant={client.subscriptionStatus === 'ACTIVE' ? 'default' : 'destructive'}
+                              variant={client.subscription_status === 'ACTIVE' && client.access_status === 'ACTIVE' ? 'default' : 'destructive'}
                               className={
-                                client.subscriptionStatus === 'ACTIVE' 
+                                client.subscription_status === 'ACTIVE' && client.access_status === 'ACTIVE'
                                   ? 'bg-green-600 text-white' 
                                   : 'bg-red-600 text-white'
                               }
                             >
-                              {client.subscriptionStatus}
+                              {client.subscription_status} / {client.access_status}
                             </Badge>
-                            <span className="text-xs text-slate-400 font-mono">{client.clientId}</span>
+                            <span className="text-xs text-slate-400 font-mono">{client.client_id}</span>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-400">
-                            <span>Email: {client.contactEmail}</span>
-                            <span>Created: {new Date(client.createdDate).toLocaleDateString()}</span>
-                            <span>Expires: {new Date(client.subscriptionEnd).toLocaleDateString()}</span>
-                            <span>Last Login: {client.lastLogin}</span>
-                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-400 mb-3">
+                          <span>Username: {client.username}</span>
+                          <span>Contact: {client.contact_person || 'N/A'}</span>
+                          <span>Email: {client.email || 'N/A'}</span>
+                          <span>Phone: {client.phone || 'N/A'}</span>
+                          <span>Created: {new Date(client.created_at).toLocaleDateString()}</span>
+                          <span>Expires: {new Date(client.subscription_end).toLocaleDateString()}</span>
+                          <span>Last Login: {client.last_login ? new Date(client.last_login).toLocaleDateString() : 'Never'}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-3">
+                          <Input
+                            type="date"
+                            defaultValue={client.subscription_end}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                updateSubscriptionEnd(client.id, e.target.value);
+                              }
+                            }}
+                            className="bg-slate-600 border-slate-500 text-white text-sm max-w-40"
+                          />
+                          <span className="text-xs text-slate-400">Update subscription end</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
@@ -337,19 +570,24 @@ const AdminPanel = () => {
                             variant="outline"
                             size="sm"
                             className={`border-slate-600 hover:bg-slate-700 ${
-                              client.subscriptionStatus === 'ACTIVE' 
+                              client.subscription_status === 'ACTIVE' 
                                 ? 'text-red-400 hover:text-red-300' 
                                 : 'text-green-400 hover:text-green-300'
                             }`}
                           >
-                            {client.subscriptionStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                            {client.subscription_status === 'ACTIVE' ? 'Suspend Subscription' : 'Activate Subscription'}
                           </Button>
                           <Button 
-                            variant="ghost" 
+                            onClick={() => toggleAccess(client.id)}
+                            variant="outline"
                             size="sm"
-                            className="text-slate-400 hover:text-white hover:bg-slate-700"
+                            className={`border-slate-600 hover:bg-slate-700 ${
+                              client.access_status === 'ACTIVE' 
+                                ? 'text-orange-400 hover:text-orange-300' 
+                                : 'text-blue-400 hover:text-blue-300'
+                            }`}
                           >
-                            <Edit className="h-4 w-4" />
+                            {client.access_status === 'ACTIVE' ? 'Stop Access' : 'Grant Access'}
                           </Button>
                           <Button 
                             variant="ghost" 
