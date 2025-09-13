@@ -2,6 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* Dark theme colors - Professional ERP style */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
+    --radius: 0.5rem;
+
+    /* Professional gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217.2 91.2% 59.8%), hsl(217.2 91.2% 45%));
+    --gradient-card: linear-gradient(135deg, hsl(222.2 84% 6%), hsl(217.2 32.6% 18%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 15%));
+    
+    /* Professional shadows */
+    --shadow-card: 0 4px 6px -1px hsl(217.2 32.6% 17.5% / 0.3);
+    --shadow-elevated: 0 10px 15px -3px hsl(217.2 32.6% 17.5% / 0.5);
+    --shadow-primary: 0 4px 14px 0 hsl(217.2 91.2% 59.8% / 0.3);
+
+    /* Success, warning, info colors */
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 355.7 100% 97.3%;
+    --warning: 32.1 94.6% 43.7%;
+    --warning-foreground: 210 40% 98%;
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 222.2 84% 4.9%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Professional scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Modern focus styles */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Professional animations */
+  .animate-slide-in {
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
