@@ -9,7 +9,6 @@ import {
   Edit, 
   Trash2, 
   Package, 
-  AlertTriangle,
   Search
 } from "lucide-react";
 

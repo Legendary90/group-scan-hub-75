@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { AdminLogin } from "@/components/AdminLogin";
 import { 
   Users, 
   Settings, 
@@ -39,6 +41,7 @@ interface Client {
 }
 
 const AdminPanel = () => {
+  const { isAdminAuthenticated, isLoading: authLoading, adminLogout } = useAdminAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,6 +56,23 @@ const AdminPanel = () => {
   });
   
   const { toast } = useToast();
+
+  // Show loading spinner while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+          <p className="mt-2 text-white">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login form if not authenticated
+  if (!isAdminAuthenticated) {
+    return <AdminLogin />;
+  }
 
   // Fetch all clients from database
   const fetchClients = async () => {
@@ -311,6 +331,14 @@ const AdminPanel = () => {
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
                 Refresh
+              </Button>
+              <Button 
+                onClick={adminLogout}
+                variant="outline"
+                size="sm"
+                className="border-red-600 text-red-400 hover:bg-red-700/20"
+              >
+                Logout
               </Button>
               <Badge variant="outline" className="text-green-400 border-green-400">
                 System Online
