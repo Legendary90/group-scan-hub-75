@@ -1,73 +1,291 @@
-# Welcome to your Lovable project
+# InviX - Professional Inventory Management System
 
-## Project info
+A comprehensive inventory and accounting management system built with React, TypeScript, and Supabase. Features multi-client architecture, financial management, document generation, and scanner integration capabilities.
 
-**URL**: https://lovable.dev/projects/0b30ea6c-f359-4449-85e3-d4d68338ced5
+## 🚀 Features
 
-## How can I edit this code?
+### 🔐 **Multi-Client Authentication**
+- Client registration and login system
+- Secure admin panel with dedicated authentication
+- Subscription management with automatic expiration
+- Data isolation between clients
 
-There are several ways of editing your application.
+### 💰 **Financial Management**
+- **Sales Tracking**: Record sales with payment status tracking
+- **Purchase Management**: Monthly purchase tracking (1-12 months)
+- **Expense Management**: Monthly and general expense tracking
+- **Profit/Loss Reports**: Automatic calculation and visualization
+- **Balance Sheets**: Comprehensive asset and liability management
+- **Banking Module**: Cash flow and bank balance tracking
+- **Tax Management**: Sales tax, income tax, export rebates, customs duty
 
-**Use Lovable**
+### 📦 **Inventory Management**
+- Product tracking with stock levels
+- Search and filter capabilities
+- Real-time inventory updates
+- Multi-client inventory isolation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0b30ea6c-f359-4449-85e3-d4d68338ced5) and start prompting.
+### 📄 **Document Generation**
+- **Professional Invoices**: Complete invoice generation with taxes
+- **Delivery Challans**: Transport details, goods description, batch numbers
+- **Balance Sheets**: Auto-generated financial statements
+- **Print/Export Ready**: Professional formatting for business use
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🗂️ **Projects & Groups**
+- Group/project management system
+- QR code generation framework
+- ESP32 scanner integration ready
+- Real-time tracking capabilities
 
-**Use your preferred IDE**
+### 📊 **History & Reports**
+- Complete project archive system
+- Excel/CSV export functionality
+- Historical data analytics
+- Search and filter capabilities
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠 **Technology Stack**
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Frontend**: React 18, TypeScript, Vite
+- **UI Framework**: Tailwind CSS, shadcn/ui components
+- **Backend**: Supabase (PostgreSQL, Authentication, RLS)
+- **State Management**: React Context, TanStack Query
+- **Routing**: React Router v6
+- **Build Tool**: Vite
+- **Package Manager**: npm/yarn
 
-Follow these steps:
+## 📋 **Prerequisites**
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Before setting up the project, ensure you have:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **Node.js** (v18 or higher)
+- **npm** or **yarn** package manager
+- **Supabase account** (free tier available)
+- **Git** for version control
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🔧 **Installation & Setup**
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### 1. **Clone the Repository**
+```bash
+git clone <your-repository-url>
+cd invix-inventory-system
 ```
 
-**Edit a file directly in GitHub**
+### 2. **Install Dependencies**
+```bash
+npm install
+# or
+yarn install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 3. **Supabase Setup**
 
-**Use GitHub Codespaces**
+#### A. Create Supabase Project
+1. Go to [https://supabase.com](https://supabase.com)
+2. Sign up/login and create a new project
+3. Wait for the project to be fully provisioned
+4. Note down your **Project URL** and **Anon Key**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+#### B. Configure Environment Variables
+Create a `.env.local` file in the root directory:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-## What technologies are used for this project?
+#### C. Database Schema Setup
+1. Open your Supabase project dashboard
+2. Go to **SQL Editor**
+3. Run the complete schema from `database_schema.sql`
+4. This will create all tables, policies, functions, and triggers
 
-This project is built with:
+### 4. **Admin Account Setup**
+The system comes with a pre-configured admin account:
+- **Username**: `admin`
+- **Password**: `invixop32#*@`
+- **Access URL**: `http://localhost:5173/secure-admin`
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### 5. **Run the Development Server**
+```bash
+npm run dev
+# or
+yarn dev
+```
 
-## How can I deploy this project?
+The application will be available at `http://localhost:5173`
 
-Simply open [Lovable](https://lovable.dev/projects/0b30ea6c-f359-4449-85e3-d4d68338ced5) and click on Share -> Publish.
+## 🏗️ **Project Structure**
 
-## Can I connect a custom domain to my Lovable project?
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # shadcn/ui components
+│   ├── AccountsModule.tsx
+│   ├── InventoryModule.tsx
+│   ├── DocumentsModule.tsx
+│   ├── GroupsModule.tsx
+│   ├── HistoryModule.tsx
+│   ├── Dashboard.tsx
+│   ├── LoginForm.tsx
+│   ├── AdminLogin.tsx
+│   └── SubscriptionExpired.tsx
+├── contexts/           # React context providers
+│   ├── AuthContext.tsx
+│   └── AdminAuthContext.tsx
+├── pages/              # Main page components
+│   ├── Index.tsx
+│   ├── AdminPanel.tsx
+│   └── NotFound.tsx
+├── lib/                # Utility libraries
+│   ├── auth.ts
+│   ├── supabase.ts
+│   └── utils.ts
+├── integrations/       # External service integrations
+│   └── supabase/
+└── hooks/              # Custom React hooks
+```
 
-Yes, you can!
+## 🎯 **Usage Guide**
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### **Client Access**
+1. Navigate to the main application
+2. Register a new company account or login with existing credentials
+3. Access all inventory and financial management features
+4. Generate documents, manage inventory, and track finances
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### **Admin Access**
+1. Navigate to `/secure-admin`
+2. Login with admin credentials:
+   - Username: `admin`
+   - Password: `invixop32#*@`
+3. Manage client accounts, subscriptions, and system settings
+
+### **Key Features Usage**
+
+#### **Financial Management**
+- Navigate to **Accounts** tab
+- Add sales, purchases, and expenses
+- View automatic profit/loss calculations
+- Generate balance sheets and financial reports
+
+#### **Inventory Tracking**
+- Use **Inventory** tab to manage products
+- Add items with stock levels
+- Track inventory movements
+- Monitor stock levels
+
+#### **Document Generation**
+- Access **Documents** tab
+- Create professional invoices and challans
+- Auto-generate balance sheets
+- Export documents for printing
+
+## 🔒 **Security Features**
+
+- **Row Level Security (RLS)**: Database-level data isolation
+- **Admin Authentication**: Secure admin panel access
+- **Session Management**: Secure session handling
+- **Data Validation**: Input sanitization and validation
+- **Subscription Control**: Automatic access management
+
+## 🚀 **Deployment**
+
+### **Production Environment Variables**
+```env
+VITE_SUPABASE_URL=your_production_supabase_url
+VITE_SUPABASE_ANON_KEY=your_production_anon_key
+```
+
+### **Build for Production**
+```bash
+npm run build
+# or
+yarn build
+```
+
+### **Deploy Options**
+- **Netlify**: Connect your Git repository
+- **Vercel**: Import project from Git
+- **Railway**: Deploy with automatic builds
+- **Self-hosted**: Deploy `dist/` folder to your server
+
+## 📚 **Database Schema**
+
+The system uses a comprehensive PostgreSQL schema with:
+
+### **Core Tables**
+- `clients` - Client accounts and subscription management
+- `admin_users` - Admin authentication
+- `sales_entries` - Sales transaction records
+- `purchase_entries` - Purchase records by month
+- `monthly_expenses` - Monthly expense tracking
+- `expense_entries` - General expense records
+- `inventory_items` - Product inventory
+- `groups` - Project/group management
+- `documents` - Generated documents
+- `profit_loss` - Calculated financial summaries
+
+### **Security**
+- Row Level Security (RLS) enabled on all tables
+- Client data isolation
+- Admin-only access controls
+- Automatic profit/loss calculations via triggers
+
+## 🔧 **Customization**
+
+### **Adding New Features**
+1. Create components in `src/components/`
+2. Add routes in `src/App.tsx`
+3. Update database schema if needed
+4. Add proper RLS policies
+
+### **Styling**
+- Uses Tailwind CSS with custom design tokens
+- Theme configuration in `tailwind.config.ts`
+- CSS variables in `src/index.css`
+
+### **Database Modifications**
+1. Create migration SQL files
+2. Test in development environment
+3. Apply to production Supabase project
+4. Update TypeScript types if needed
+
+## 🐛 **Troubleshooting**
+
+### **Common Issues**
+
+#### **Supabase Connection Issues**
+- Verify environment variables are correct
+- Check Supabase project status
+- Ensure database schema is properly set up
+
+#### **Admin Access Issues**
+- Verify admin credentials: `admin` / `invixop32#*@`
+- Check database for admin_users table
+- Clear browser localStorage if needed
+
+#### **Build Issues**
+- Clear `node_modules` and reinstall dependencies
+- Check for TypeScript errors
+- Verify all environment variables are set
+
+### **Getting Help**
+- Check browser console for errors
+- Verify Supabase logs in dashboard
+- Ensure all dependencies are installed
+- Review network requests for API errors
+
+## 📄 **License**
+
+This project is proprietary software. All rights reserved.
+
+## 🤝 **Support**
+
+For technical support or questions about setup:
+1. Check the troubleshooting section
+2. Review Supabase documentation
+3. Verify all setup steps have been completed
+4. Check browser console for error messages
+
+---
+
+**System is now ready for production use with secure admin access at `/secure-admin`**

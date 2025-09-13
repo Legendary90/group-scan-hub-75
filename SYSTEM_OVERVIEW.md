@@ -1,157 +1,325 @@
-# Complete Inventory Management System
+# InviX - System Overview & Architecture
 
-## ✅ What's Been Implemented
+## 🏗️ **System Architecture**
 
-### 1. **Monthly Purchases System**
-- Dropdown menu with Month 1-12 selection
-- Auto-cycles yearly (Month 1-12, repeats after 12 months)
-- Separate tracking for each month
-- Visual month selector in purchases tab
+InviX is a comprehensive inventory and accounting management system built with a modern tech stack designed for scalability, security, and multi-tenant operation.
 
-### 2. **Account Tabs Structure** 
-- **Sales**: Record export sales and invoices
-- **Purchases**: Monthly purchase tracking with dropdown
-- **Monthly Expenses**: Separate monthly expense tracking 
-- **Expenses**: General business expenses
-- **Assets**: Fixed and current assets management
-- **Banking**: Cash flow with Profit/Loss tracking
-- **Taxes**: Tax compliance and documentation
+### **Technology Stack**
+- **Frontend**: React 18 + TypeScript + Vite
+- **Backend**: Supabase (PostgreSQL + Auth + RLS)
+- **UI Framework**: Tailwind CSS + shadcn/ui
+- **State Management**: React Context + TanStack Query
+- **Authentication**: Custom multi-client + Admin system
 
-### 3. **Profit & Loss Tracking**
-- Real-time calculation from sales and expenses
-- Visual indicators (green for profit, red for loss)
-- Automatic updates when entries are added/deleted
-- Displayed in Banking tab with summary cards
+## 🔐 **Authentication System**
 
-### 4. **Remove Functionality**
-- Delete buttons on all account entries
-- Confirmation for safe removal
-- Real-time updates after deletion
-
-### 5. **Complete Challan System**
-- Challan number and date
-- Sender details (supplier/exporter)
-- Receiver details (buyer/importer)  
-- Description of goods with batch/lot numbers
-- Quantity/weight/units tracking
-- Transport details (vehicle, driver, courier)
-- Signature placeholder for manual signing
-
-### 6. **Inventory Management** 
-- Product name and stock tracking
-- Removed low stock alerts (as requested)
-- Add/remove inventory items
-- Real-time stock updates
-
-### 7. **Database System (Supabase)**
-- Complete database schema created
-- Client subscription management
-- Monthly tracking tables
-- Profit/loss calculations
-- Document storage (invoices, challans)
-- Row-level security enabled
-
-### 8. **Admin Panel**
-- Client management interface
-- Subscription activation/deactivation
-- Client ID generation
-- Status monitoring
-- Access at `/admin` route
-
-## 📁 File Structure Created
-
+### **Multi-Client Architecture**
 ```
-src/
-├── components/
-│   ├── AccountsModule.tsx     # Updated with monthly system
-│   ├── DocumentsModule.tsx    # Complete challan details
-│   ├── InventoryModule.tsx    # Simplified without low stock
-│   └── ui/select.tsx         # Dropdown component
-├── lib/
-│   └── supabase.ts           # Database functions
-├── pages/
-│   └── AdminPanel.tsx        # Subscription management
-└── Database files:
-    ├── DATABASE_SETUP.md      # Database instructions
-    ├── BUILD_INSTRUCTIONS.md  # .exe build guide
-    └── SYSTEM_OVERVIEW.md     # This file
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Client A      │    │   Client B      │    │   Client C      │
+│  (Company 1)    │    │  (Company 2)    │    │  (Company 3)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+              ┌─────────────────────────────────────┐
+              │        Supabase Database            │
+              │     Row Level Security (RLS)        │
+              │    Data Isolation Per Client        │
+              └─────────────────────────────────────┘
+                                 │
+              ┌─────────────────────────────────────┐
+              │         Admin Panel                 │
+              │    /secure-admin endpoint           │
+              │   Username: admin                   │
+              │   Password: invixop32#*@            │
+              └─────────────────────────────────────┘
 ```
 
-## 🗄️ Database Tables
+### **Access Control**
+- **Client Access**: Company-based login with data isolation
+- **Admin Access**: Secure admin panel at `/secure-admin`
+- **Session Management**: Secure token-based authentication
+- **Subscription Control**: Automatic access management with expiration
 
-1. **clients** - Client subscriptions
-2. **sales_entries** - Sales records  
-3. **purchase_entries** - Monthly purchases
-4. **monthly_expenses** - Monthly expenses
-5. **expense_entries** - General expenses
-6. **profit_loss** - Auto-calculated P&L
-7. **inventory_items** - Product inventory
-8. **groups** - Project groups (scanner feature)
-9. **documents** - Generated documents
+## 📊 **Database Schema Overview**
 
-## 🔧 How to Build .exe Programs
+### **Core Tables Structure**
 
-### Prerequisites:
-```bash
-npm install --save-dev electron electron-builder
+```sql
+-- Client Management
+clients
+├── id (UUID)
+├── client_id (TEXT - Unique identifier)
+├── username (TEXT - Company name as username)
+├── company_name (TEXT)
+├── subscription_status (ACTIVE/INACTIVE/SUSPENDED)
+├── subscription_end (DATE)
+└── access_status (BOOLEAN)
+
+-- Admin System  
+admin_users
+├── id (UUID)
+├── username (TEXT)
+├── password_hash (TEXT)
+├── is_active (BOOLEAN)
+└── last_login (TIMESTAMPTZ)
+
+-- Financial Management
+sales_entries
+├── client_id (Foreign Key)
+├── description (TEXT)
+├── amount (DECIMAL)
+├── date (DATE)
+├── payment_status (paid/pending/overdue)
+└── category (TEXT)
+
+purchase_entries
+├── client_id (Foreign Key)
+├── month_number (1-12)
+├── year (INTEGER)
+├── description (TEXT)
+├── amount (DECIMAL)
+└── date (DATE)
+
+monthly_expenses
+├── client_id (Foreign Key)
+├── month_number (1-12)
+├── year (INTEGER)
+├── description (TEXT)
+├── amount (DECIMAL)
+└── category (TEXT)
+
+expense_entries
+├── client_id (Foreign Key)
+├── description (TEXT)
+├── amount (DECIMAL)
+├── date (DATE)
+└── category (TEXT)
+
+profit_loss (Auto-calculated)
+├── client_id (Foreign Key)
+├── month_number (1-12)
+├── year (INTEGER)
+├── total_sales (DECIMAL)
+├── total_expenses (DECIMAL)
+└── net_profit_loss (DECIMAL)
+
+-- Inventory Management
+inventory_items
+├── client_id (Foreign Key)
+├── name (TEXT)
+├── current_stock (INTEGER)
+└── updated_at (TIMESTAMPTZ)
+
+-- Document Management
+documents
+├── client_id (Foreign Key)
+├── type (invoice/challan/balance_sheet)
+├── document_data (JSONB)
+└── created_at (TIMESTAMPTZ)
+
+challans
+├── client_id (Foreign Key)
+├── challan_number (TEXT)
+├── sender_name (TEXT)
+├── receiver_name (TEXT)
+├── goods_description (TEXT)
+├── transport_details (TEXT)
+└── created_at (TIMESTAMPTZ)
+
+-- Project Management
+groups
+├── client_id (Foreign Key)
+├── name (TEXT)
+├── status (active/closed)
+└── created_at (TIMESTAMPTZ)
+
+group_items
+├── group_id (Foreign Key)
+├── client_id (Foreign Key)
+├── container_name (TEXT)
+├── quantity (INTEGER)
+├── quota (INTEGER)
+├── scanned_count (INTEGER)
+└── qr_code (TEXT)
 ```
 
-### Build Commands:
-```bash
-# Main application
-npm run build:exe
+## 🔒 **Security Implementation**
 
-# Admin panel  
-npm run build:admin
+### **Row Level Security (RLS)**
+```sql
+-- Every table has RLS enabled
+ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sales_entries ENABLE ROW LEVEL SECURITY;
+-- ... all tables
+
+-- Client data isolation policy
+CREATE POLICY "Clients can view their own data" ON public.sales_entries
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+-- Admin access policy
+CREATE POLICY "Admin can access all clients" ON public.clients
+FOR ALL USING (true);
 ```
 
-### Distribution:
-- Creates Windows installer (.exe)
-- Includes both main app and admin panel
-- Offline capable after installation
-- Desktop shortcuts created
+### **Authentication Functions**
+```sql
+-- Client authentication
+authenticate_client(username, password) → Returns client data
 
-## 🎯 How the System Works
+-- Admin authentication  
+authenticate_admin_user(username, password) → Returns session token
 
-### For Clients:
-1. Receive unique client ID from you
-2. Enter client ID in software
-3. System checks Supabase for active subscription
-4. Features enabled if subscription is ACTIVE
+-- Session validation
+validate_admin_session(token) → Returns validation status
+```
 
-### For Admin (You):
-1. Access admin panel at `/admin`
-2. Add new clients with unique IDs
-3. Activate/deactivate subscriptions
-4. Monitor client status
+## 📈 **Business Logic & Features**
 
-### Monthly System:
-- Purchases automatically track by month
-- Expenses separated into monthly and general
-- System auto-cycles months (1-12, then repeats)
-- Profit/loss calculated in real-time
+### **Financial Management Flow**
+```
+Sales Entry → Automatic Profit/Loss Calculation ← Expense Entry
+     ↓                       ↓                           ↑
+Balance Sheet ← Monthly Reports → Tax Calculations
+     ↓                       ↓                           ↑
+Document Generation → Invoice/Challan Creation
+```
 
-## 🚀 Next Steps to Deploy
+### **Inventory Management**
+- Real-time stock tracking
+- Multi-client inventory isolation
+- Scanner integration framework (ESP32 ready)
+- QR code generation system
 
-1. **Connect Supabase**: Click green Supabase button in Lovable
-2. **Set Environment Variables**: Add your Supabase credentials
-3. **Run Database Migration**: Execute the SQL schema
-4. **Build Executables**: Follow build instructions
-5. **Distribute to Clients**: Provide client IDs and installers
+### **Document Generation System**
+- **Invoices**: Professional formatting with tax calculations
+- **Challans**: Transport and goods documentation
+- **Balance Sheets**: Auto-generated from financial data
+- **Export Options**: Print-ready PDF generation
 
-## 📋 Features Marked "Coming Soon"
-- Scanner integration (ESP32)
-- Real-time group/project tracking
-- Auto document generation from data
+## 🔄 **Data Flow Architecture**
 
-## 💡 Key Benefits
+### **Client Session Flow**
+```
+1. Client Registration/Login
+2. Session Creation + Client ID Assignment
+3. RLS Policy Activation (client_id context)
+4. Data Access (Filtered by RLS)
+5. Business Operations (CRUD with isolation)
+6. Session Management (Auto-refresh/expire)
+```
 
-✅ **Subscription-based**: Full control over client access  
-✅ **Monthly tracking**: Organized by business months  
-✅ **Profit/Loss**: Real-time financial tracking  
-✅ **Complete documents**: Professional invoices/challans  
-✅ **Offline capable**: Works without internet after setup  
-✅ **Database-backed**: Secure cloud storage  
-✅ **Admin control**: Centralized client management  
+### **Admin Session Flow**
+```
+1. Admin Login (/secure-admin)
+2. Credential Validation (admin_users table)
+3. Session Token Generation
+4. Full System Access (All clients)
+5. Client Management Operations
+6. System Administration
+```
 
-Your inventory management system is now complete with monthly tracking, profit/loss calculations, comprehensive document generation, and a subscription-based admin system!
+## 🎯 **Module Breakdown**
+
+### **Dashboard Module**
+- Overview statistics
+- Quick access navigation
+- System status indicators
+- Client information display
+
+### **Accounts Module**
+- Sales tracking and management
+- Purchase recording (monthly system)
+- Expense management (monthly + general)
+- Profit/Loss calculations
+- Tax management
+- Banking and cash flow
+
+### **Inventory Module**
+- Product management
+- Stock level tracking
+- Search and filtering
+- Stock movement history
+
+### **Documents Module**
+- Invoice generation
+- Challan creation
+- Balance sheet auto-generation
+- Export functionality
+
+### **Groups Module (Scanner Ready)**
+- Project/group creation
+- QR code generation
+- ESP32 scanner integration framework
+- Real-time tracking system
+
+### **History Module**
+- Completed project archives
+- Export functionality
+- Statistical analysis
+- Historical reporting
+
+### **Admin Panel**
+- Client account management
+- Subscription control
+- System monitoring
+- Access management
+
+## 🚀 **Scalability & Performance**
+
+### **Database Optimization**
+- Indexed foreign keys
+- Optimized RLS policies
+- Efficient trigger functions
+- Automatic cleanup procedures
+
+### **Frontend Performance**
+- Code splitting with React.lazy
+- Optimistic UI updates
+- Efficient state management
+- Cached query results
+
+### **Security Measures**
+- Input sanitization
+- SQL injection prevention
+- Session timeout management
+- Audit trail logging
+
+## 🔧 **Integration Points**
+
+### **Scanner Integration (ESP32)**
+- QR code scanning endpoint
+- Real-time data updates
+- Inventory synchronization
+- Group management integration
+
+### **Document Export**
+- PDF generation system
+- Excel/CSV export
+- Print formatting
+- Email integration ready
+
+### **Financial Integrations**
+- Tax calculation system
+- Banking data import ready
+- Accounting software export
+- Financial reporting APIs
+
+## 📋 **System Requirements**
+
+### **Production Environment**
+- **Database**: PostgreSQL 14+ (Supabase)
+- **Memory**: 2GB RAM minimum
+- **Storage**: 10GB minimum
+- **Network**: HTTPS required
+
+### **Development Environment**
+- **Node.js**: v18+
+- **NPM/Yarn**: Latest version
+- **Git**: Version control
+- **Browser**: Modern browser with ES6 support
+
+---
+
+This system architecture provides a robust, scalable, and secure foundation for multi-client inventory and accounting management with room for future enhancements and integrations.
