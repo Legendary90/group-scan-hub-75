@@ -463,29 +463,9 @@ export const AccountsModule = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
                   <Label className="text-green-700 dark:text-green-300">Total Sales</Label>
-                  <p className="text-2xl font-bold text-green-600">${profitLoss.totalSales.toFixed(2)}</p>
-                </div>
-                <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-900/20">
-                  <Label className="text-red-700 dark:text-red-300">Total Purchases</Label>
-                  <p className="text-2xl font-bold text-red-600">${purchaseEntries.reduce((sum, entry) => sum + entry.amount, 0).toFixed(2)}</p>
-                </div>
-                <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-900/20">
-                  <Label className="text-red-700 dark:text-red-300">Total Expenses</Label>
-                  <p className="text-2xl font-bold text-red-600">${profitLoss.totalExpenses.toFixed(2)}</p>
-                </div>
-                <div className={`p-4 border rounded-lg ${profitLoss.netProfitLoss >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                  <Label className={profitLoss.netProfitLoss >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}>Net Profit/Loss</Label>
-                  <p className={`text-2xl font-bold ${profitLoss.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    ${profitLoss.netProfitLoss.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
                   <p className="text-2xl font-bold text-green-700 dark:text-green-300">
                     ${profitLoss.totalSales.toFixed(2)}
                   </p>
