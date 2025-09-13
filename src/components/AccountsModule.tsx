@@ -271,7 +271,7 @@ export const AccountsModule = () => {
       </Card>
 
       <Tabs defaultValue="sales" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="sales" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
             Sales
