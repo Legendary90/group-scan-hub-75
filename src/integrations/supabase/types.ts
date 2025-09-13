@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          password_hash: string
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash: string
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash?: string
+          username?: string
+        }
+        Relationships: []
+      }
       admins: {
         Row: {
           created_at: string | null
@@ -535,6 +562,13 @@ export type Database = {
           admin_username: string
         }[]
       }
+      authenticate_admin_user: {
+        Args: { p_password: string; p_username: string }
+        Returns: {
+          admin_username: string
+          session_token: string
+        }[]
+      }
       auto_expire_subscriptions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -542,6 +576,13 @@ export type Database = {
       generate_client_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      validate_admin_session: {
+        Args: { session_token: string }
+        Returns: {
+          admin_username: string
+          is_valid: boolean
+        }[]
       }
     }
     Enums: {
