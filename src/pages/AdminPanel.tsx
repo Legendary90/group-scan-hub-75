@@ -57,23 +57,6 @@ const AdminPanel = () => {
   
   const { toast } = useToast();
 
-  // Show loading spinner while checking auth
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-          <p className="mt-2 text-white">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show login form if not authenticated
-  if (!isAdminAuthenticated) {
-    return <AdminLogin />;
-  }
-
   // Fetch all clients from database
   const fetchClients = async () => {
     try {
@@ -98,8 +81,27 @@ const AdminPanel = () => {
 
   // Load clients on component mount
   useEffect(() => {
-    fetchClients();
-  }, []);
+    if (isAdminAuthenticated) {
+      fetchClients();
+    }
+  }, [isAdminAuthenticated]);
+
+  // Show loading spinner while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+          <p className="mt-2 text-white">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login form if not authenticated
+  if (!isAdminAuthenticated) {
+    return <AdminLogin />;
+  }
 
   // Add new client
   const addClient = async () => {
