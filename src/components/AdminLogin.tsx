@@ -53,9 +53,9 @@ export const AdminLogin = () => {
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl text-white">
             <Shield className="h-6 w-6" />
-            Admin Access
+            InviX ERP Admin
           </CardTitle>
-          <p className="text-slate-400">Secure Administration Panel</p>
+          <p className="text-slate-400">System Administration Panel</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">

@@ -1,15 +1,41 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
-  Scan, 
-  QrCode, 
+  FolderOpen, 
+  Plus, 
   Package, 
-  Clock,
-  AlertCircle
+  Calendar,
+  Eye,
+  Edit,
+  Trash2
 } from "lucide-react";
+import { useState } from "react";
 
 export const GroupsModule = () => {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [groups] = useState([
+    {
+      id: 1,
+      name: "Q1 2024 Projects",
+      status: "active",
+      itemCount: 45,
+      createdDate: "2024-01-15",
+      description: "First quarter project tracking"
+    },
+    {
+      id: 2,
+      name: "Manufacturing Batch #001",
+      status: "closed",
+      itemCount: 32,
+      createdDate: "2023-12-20",
+      description: "Completed manufacturing batch"
+    }
+  ]);
+
   return (
     <div className="space-y-6">
       <Card className="bg-gradient-primary text-white border-0">
@@ -17,148 +43,108 @@ export const GroupsModule = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">Projects & Groups</h2>
-              <p className="opacity-90">Manage scanning groups and projects</p>
+              <p className="opacity-90">Organize and manage project groups</p>
             </div>
-            <Package className="h-8 w-8 opacity-80" />
+            <FolderOpen className="h-8 w-8 opacity-80" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Scanner Features - Coming Soon */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="opacity-60 border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Create Groups
-              <Badge variant="outline">Coming Soon</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Create and manage scanning groups for different projects. Name groups, 
-              add products, and track progress in real-time.
-            </p>
-            <Button className="w-full mt-4" disabled>
-              <Package className="h-4 w-4 mr-2" />
-              Create New Group
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="opacity-60 border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5" />
-              Generate QR Tags
-              <Badge variant="outline">Coming Soon</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Generate QR code tags for products with special IDs. 
-              Print multiple copies and attach to products for easy scanning.
-            </p>
-            <Button className="w-full mt-4" disabled>
-              <QrCode className="h-4 w-4 mr-2" />
-              Generate Tags
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="opacity-60 border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Scan className="h-5 w-5" />
-              Scanner Interface
-              <Badge variant="outline">Coming Soon</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Connect ESP32 scanner to scan products and automatically 
-              update group data. Real-time inventory tracking.
-            </p>
-            <Button className="w-full mt-4" disabled>
-              <Scan className="h-4 w-4 mr-2" />
-              Connect Scanner
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="opacity-60 border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Real-time Tracking
-              <Badge variant="outline">Coming Soon</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Track scanning progress in real-time. Monitor quota completion, 
-              stock levels, and worker productivity.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="opacity-60 border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Group Management
-              <Badge variant="outline">Coming Soon</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Rename groups (F2), close completed groups, 
-              and manage multiple active groups simultaneously.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="opacity-60 border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Stock Confirmation
-              <Badge variant="outline">Coming Soon</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Automatic "Confirmed" notifications after scanning. 
-              Choose between Stock In or Export modes for each scan.
-            </p>
-          </CardContent>
-        </Card>
+      {/* Create Group Button */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Active Groups</h3>
+        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Group
+        </Button>
       </div>
 
-      {/* Scanner Status */}
-      <Card className="border-muted bg-muted/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-muted-foreground">
-            <Scan className="h-5 w-5" />
-            Scanner Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-              Scanner Not Connected
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              The ESP32 scanner hardware is not yet integrated. All scanner-dependent 
-              features will be available once the hardware component is ready.
+      {/* Create Group Form */}
+      {showCreateForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Group</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="groupName">Group Name</Label>
+              <Input id="groupName" placeholder="Enter group name" />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea id="description" placeholder="Optional description" />
+            </div>
+            <div className="flex gap-2">
+              <Button>Create Group</Button>
+              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Groups List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {groups.map((group) => (
+          <Card key={group.id}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" />
+                  {group.name}
+                </span>
+                <Badge variant={group.status === "active" ? "default" : "secondary"}>
+                  {group.status}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">{group.description}</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <Package className="h-4 w-4" />
+                  <span>{group.itemCount} items</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4" />
+                  <span>Created: {group.createdDate}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline">
+                    <Eye className="h-4 w-4 mr-1" />
+                    View
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {groups.length === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="text-center py-12">
+            <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Groups Created</h3>
+            <p className="text-muted-foreground mb-4">
+              Create your first project group to start organizing your work
             </p>
-            <Badge variant="outline" className="mt-4">
-              Hardware Development in Progress
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+            <Button onClick={() => setShowCreateForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create First Group
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

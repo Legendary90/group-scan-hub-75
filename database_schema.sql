@@ -1,5 +1,5 @@
 -- ============================================
--- INVENTORY MANAGEMENT SYSTEM DATABASE SCHEMA
+-- INVIX ERP SYSTEM DATABASE SCHEMA
 -- ============================================
 
 -- Enable Row Level Security
@@ -137,45 +137,306 @@ CREATE TABLE IF NOT EXISTS public.group_items (
 );
 
 -- ============================================
--- 5. DOCUMENTS & HISTORY
+-- 5. PERIOD MANAGEMENT
 -- ============================================
 
--- Documents (invoices, challans, balance sheets)
+-- Periods (monthly or daily operational periods)
+CREATE TABLE IF NOT EXISTS public.periods (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('monthly', 'daily')),
+  start_date DATE NOT NULL,
+  end_date DATE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  closed_at TIMESTAMPTZ
+);
+
+-- ============================================
+-- 6. FINANCIAL RECORDS MODULE
+-- ============================================
+
+-- Income receipts
+CREATE TABLE IF NOT EXISTS public.income_receipts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  receipt_number TEXT NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  source TEXT NOT NULL,
+  description TEXT,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Expense receipts
+CREATE TABLE IF NOT EXISTS public.expense_receipts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  receipt_number TEXT NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  vendor TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Invoices
+CREATE TABLE IF NOT EXISTS public.invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  invoice_number TEXT NOT NULL,
+  customer_name TEXT NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'overdue')),
+  due_date DATE,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Bills
+CREATE TABLE IF NOT EXISTS public.bills (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  bill_number TEXT NOT NULL,
+  vendor_name TEXT NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'overdue')),
+  due_date DATE,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Payroll records
+CREATE TABLE IF NOT EXISTS public.payroll_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  employee_name TEXT NOT NULL,
+  position TEXT,
+  salary DECIMAL(15,2) NOT NULL,
+  deductions DECIMAL(15,2) DEFAULT 0,
+  bonuses DECIMAL(15,2) DEFAULT 0,
+  net_pay DECIMAL(15,2) NOT NULL,
+  pay_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Tax documents
+CREATE TABLE IF NOT EXISTS public.tax_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  document_type TEXT NOT NULL,
+  tax_year INTEGER NOT NULL,
+  amount DECIMAL(15,2),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'filed', 'approved')),
+  file_path TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- 7. LEGAL & COMPLIANCE MODULE
+-- ============================================
+
+-- Contracts and agreements
+CREATE TABLE IF NOT EXISTS public.contracts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  contract_name TEXT NOT NULL,
+  party_name TEXT NOT NULL,
+  contract_type TEXT,
+  start_date DATE NOT NULL,
+  end_date DATE,
+  value DECIMAL(15,2),
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'expired', 'terminated')),
+  file_path TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Licenses and permits
+CREATE TABLE IF NOT EXISTS public.licenses_permits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  license_name TEXT NOT NULL,
+  license_number TEXT,
+  issuing_authority TEXT,
+  issue_date DATE NOT NULL,
+  expiry_date DATE,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'expired', 'suspended')),
+  file_path TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Insurance documents
+CREATE TABLE IF NOT EXISTS public.insurance_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  policy_name TEXT NOT NULL,
+  policy_number TEXT,
+  insurance_company TEXT,
+  coverage_amount DECIMAL(15,2),
+  premium DECIMAL(15,2),
+  start_date DATE NOT NULL,
+  end_date DATE,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'expired', 'cancelled')),
+  file_path TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Regulatory filings
+CREATE TABLE IF NOT EXISTS public.regulatory_filings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  filing_type TEXT NOT NULL,
+  authority TEXT NOT NULL,
+  filing_date DATE NOT NULL,
+  due_date DATE,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'submitted', 'approved', 'rejected')),
+  file_path TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- 8. EMPLOYEE MODULE
+-- ============================================
+
+-- Employee records
+CREATE TABLE IF NOT EXISTS public.employees (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  employee_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  position TEXT,
+  department TEXT,
+  email TEXT,
+  phone TEXT,
+  hire_date DATE NOT NULL,
+  salary DECIMAL(15,2),
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'terminated')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Attendance records
+CREATE TABLE IF NOT EXISTS public.attendance_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  employee_id UUID NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  check_in_time TIME,
+  check_out_time TIME,
+  hours_worked DECIMAL(5,2),
+  status TEXT DEFAULT 'present' CHECK (status IN ('present', 'absent', 'late', 'half_day')),
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Leave records
+CREATE TABLE IF NOT EXISTS public.leave_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  employee_id UUID NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
+  leave_type TEXT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  days_count INTEGER NOT NULL,
+  reason TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  approved_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- 9. CUSTOMER & SALES MODULE
+-- ============================================
+
+-- Customer records
+CREATE TABLE IF NOT EXISTS public.customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  customer_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  company TEXT,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  postal_code TEXT,
+  country TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Sales invoices (enhanced)
+CREATE TABLE IF NOT EXISTS public.sales_invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
+  invoice_number TEXT NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  tax_amount DECIMAL(15,2) DEFAULT 0,
+  total_amount DECIMAL(15,2) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'overdue', 'cancelled')),
+  due_date DATE,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Customer feedback/complaints
+CREATE TABLE IF NOT EXISTS public.customer_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
+  type TEXT NOT NULL CHECK (type IN ('feedback', 'complaint', 'suggestion')),
+  subject TEXT NOT NULL,
+  description TEXT NOT NULL,
+  priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+  status TEXT DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+  assigned_to TEXT,
+  resolution TEXT,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- 10. DOCUMENTS & HISTORY
+-- ============================================
+
+-- Documents (general file storage)
 CREATE TABLE IF NOT EXISTS public.documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('invoice', 'challan', 'balance_sheet')),
-  document_data JSONB NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Challan specific fields
-CREATE TABLE IF NOT EXISTS public.challans (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id TEXT NOT NULL REFERENCES public.clients(client_id) ON DELETE CASCADE,
-  challan_number TEXT NOT NULL,
-  date DATE NOT NULL DEFAULT CURRENT_DATE,
-  sender_name TEXT NOT NULL,
-  sender_address TEXT,
-  receiver_name TEXT NOT NULL,
-  receiver_address TEXT,
-  goods_description TEXT NOT NULL,
-  batch_number TEXT,
-  quantity TEXT NOT NULL,
-  weight TEXT,
-  units TEXT,
-  truck_number TEXT,
-  driver_name TEXT,
-  courier_service TEXT,
+  period_id UUID REFERENCES public.periods(id) ON DELETE CASCADE,
+  module TEXT NOT NULL,
+  document_type TEXT NOT NULL,
+  name TEXT NOT NULL,
+  file_path TEXT,
+  file_size INTEGER,
+  mime_type TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================
--- 6. ROW LEVEL SECURITY (RLS) POLICIES
+-- 11. ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================
 
 -- Enable RLS on all tables
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.periods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sales_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.purchase_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.monthly_expenses ENABLE ROW LEVEL SECURITY;
@@ -185,11 +446,38 @@ ALTER TABLE public.inventory_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.group_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.challans ENABLE ROW LEVEL SECURITY;
+
+-- Financial Records
+ALTER TABLE public.income_receipts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expense_receipts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payroll_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tax_documents ENABLE ROW LEVEL SECURITY;
+
+-- Legal & Compliance
+ALTER TABLE public.contracts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.licenses_permits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.insurance_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.regulatory_filings ENABLE ROW LEVEL SECURITY;
+
+-- Employee Management
+ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attendance_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leave_records ENABLE ROW LEVEL SECURITY;
+
+-- Customer & Sales
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sales_invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customer_feedback ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for clients (admin can access all, clients can access their own)
 CREATE POLICY "Admin can access all clients" ON public.clients
 FOR ALL USING (true);
+
+-- Core modules
+CREATE POLICY "Clients can view their own data" ON public.periods
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
 
 CREATE POLICY "Clients can view their own data" ON public.sales_entries
 FOR ALL USING (client_id = current_setting('app.current_client_id', true));
@@ -218,11 +506,60 @@ FOR ALL USING (client_id = current_setting('app.current_client_id', true));
 CREATE POLICY "Clients can view their own data" ON public.documents
 FOR ALL USING (client_id = current_setting('app.current_client_id', true));
 
-CREATE POLICY "Clients can view their own data" ON public.challans
+-- Financial Records policies
+CREATE POLICY "Clients can view their own data" ON public.income_receipts
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.expense_receipts
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.invoices
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.bills
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.payroll_records
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.tax_documents
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+-- Legal & Compliance policies
+CREATE POLICY "Clients can view their own data" ON public.contracts
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.licenses_permits
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.insurance_documents
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.regulatory_filings
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+-- Employee Management policies
+CREATE POLICY "Clients can view their own data" ON public.employees
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.attendance_records
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.leave_records
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+-- Customer & Sales policies
+CREATE POLICY "Clients can view their own data" ON public.customers
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.sales_invoices
+FOR ALL USING (client_id = current_setting('app.current_client_id', true));
+
+CREATE POLICY "Clients can view their own data" ON public.customer_feedback
 FOR ALL USING (client_id = current_setting('app.current_client_id', true));
 
 -- ============================================
--- 7. FUNCTIONS & TRIGGERS
+-- 12. FUNCTIONS & TRIGGERS
 -- ============================================
 
 -- Function to auto-update profit/loss
@@ -316,13 +653,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- 8. INDEXES FOR PERFORMANCE
+-- 13. INDEXES FOR PERFORMANCE
 -- ============================================
 
+-- Core indexes
 CREATE INDEX IF NOT EXISTS idx_clients_client_id ON public.clients(client_id);
 CREATE INDEX IF NOT EXISTS idx_clients_username ON public.clients(username);
 CREATE INDEX IF NOT EXISTS idx_clients_subscription_end ON public.clients(subscription_end);
 
+CREATE INDEX IF NOT EXISTS idx_periods_client_status ON public.periods(client_id, status);
 CREATE INDEX IF NOT EXISTS idx_sales_client_date ON public.sales_entries(client_id, date);
 CREATE INDEX IF NOT EXISTS idx_purchases_client_month ON public.purchase_entries(client_id, month_number, year);
 CREATE INDEX IF NOT EXISTS idx_monthly_expenses_client_month ON public.monthly_expenses(client_id, month_number, year);
@@ -331,8 +670,35 @@ CREATE INDEX IF NOT EXISTS idx_expenses_client_date ON public.expense_entries(cl
 CREATE INDEX IF NOT EXISTS idx_groups_client_status ON public.groups(client_id, status);
 CREATE INDEX IF NOT EXISTS idx_inventory_client ON public.inventory_items(client_id);
 
+-- Financial Records indexes
+CREATE INDEX IF NOT EXISTS idx_income_receipts_client_period ON public.income_receipts(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_expense_receipts_client_period ON public.expense_receipts(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_client_period ON public.invoices(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_bills_client_period ON public.bills(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_client_period ON public.payroll_records(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_tax_documents_client_period ON public.tax_documents(client_id, period_id);
+
+-- Legal & Compliance indexes
+CREATE INDEX IF NOT EXISTS idx_contracts_client_period ON public.contracts(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_licenses_client_period ON public.licenses_permits(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_client_period ON public.insurance_documents(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_regulatory_client_period ON public.regulatory_filings(client_id, period_id);
+
+-- Employee Management indexes
+CREATE INDEX IF NOT EXISTS idx_employees_client ON public.employees(client_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_client_period ON public.attendance_records(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_leave_client_period ON public.leave_records(client_id, period_id);
+
+-- Customer & Sales indexes
+CREATE INDEX IF NOT EXISTS idx_customers_client ON public.customers(client_id);
+CREATE INDEX IF NOT EXISTS idx_sales_invoices_client_period ON public.sales_invoices(client_id, period_id);
+CREATE INDEX IF NOT EXISTS idx_customer_feedback_client_period ON public.customer_feedback(client_id, period_id);
+
+-- Documents indexes
+CREATE INDEX IF NOT EXISTS idx_documents_client_module ON public.documents(client_id, module);
+
 -- ============================================
--- 9. SAMPLE DATA (OPTIONAL)
+-- 14. SAMPLE DATA (OPTIONAL)
 -- ============================================
 
 -- Insert sample admin user (password should be hashed in production)
