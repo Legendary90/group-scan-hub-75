@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AuthUser {
   client_id: string;
@@ -28,7 +28,7 @@ export const authenticateClient = async (username: string, password: string): Pr
     }
 
     // Check subscription status
-    if (data.subscription_status !== 'ACTIVE' || data.access_status !== 'ACTIVE') {
+    if (data.subscription_status !== 'ACTIVE' || !data.access_status) {
       return { user: null, error: 'Your subscription has expired or access has been suspended. Please contact administrator.' };
     }
 
@@ -43,7 +43,7 @@ export const authenticateClient = async (username: string, password: string): Pr
       username: data.username,
       company_name: data.company_name,
       subscription_status: data.subscription_status,
-      access_status: data.access_status
+      access_status: data.access_status ? 'ACTIVE' : 'STOPPED'
     };
 
     return { user, error: null };
@@ -62,11 +62,22 @@ export const registerClient = async (userData: {
   phone?: string;
 }): Promise<{ client_id: string | null; error: string | null }> => {
   try {
-    // Generate client ID
-    const client_id = 'CLI_' + Date.now().toString().slice(-8);
+    // First check if username already exists
+    const { data: existingUser } = await supabase
+      .from('clients')
+      .select('username')
+      .eq('username', userData.username)
+      .maybeSingle();
+
+    if (existingUser) {
+      return { client_id: null, error: 'Username already exists. Please choose a different username.' };
+    }
+
+    // Generate unique client ID
+    const client_id = 'CLI_' + Date.now().toString() + Math.random().toString(36).substr(2, 9);
     
-    // In production, hash the password
-    const password_hash = userData.password; // Should use bcrypt or similar
+    // In production, hash the password properly
+    const password_hash = userData.password; // Should use bcrypt in production
 
     const { data, error } = await supabase
       .from('clients')
@@ -75,23 +86,29 @@ export const registerClient = async (userData: {
         username: userData.username,
         password_hash,
         company_name: userData.company_name,
-        contact_person: userData.contact_person,
-        email: userData.email,
-        phone: userData.phone,
+        contact_person: userData.contact_person || null,
+        email: userData.email || null,
+        phone: userData.phone || null,
         subscription_status: 'ACTIVE',
         subscription_start: new Date().toISOString().split('T')[0],
         subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+        access_status: true
       }])
       .select()
       .single();
 
     if (error) {
-      return { client_id: null, error: 'Registration failed. Username might already exist.' };
+      console.error('Registration error:', error);
+      if (error.code === '23505') { // Unique constraint violation
+        return { client_id: null, error: 'Username already exists. Please choose a different username.' };
+      }
+      return { client_id: null, error: 'Registration failed. Please try again.' };
     }
 
     return { client_id: data.client_id, error: null };
   } catch (error) {
-    return { client_id: null, error: 'Registration failed' };
+    console.error('Registration catch error:', error);
+    return { client_id: null, error: 'Registration failed. Please try again.' };
   }
 };
 
@@ -121,7 +138,7 @@ export const checkSubscriptionStatus = async (client_id: string): Promise<{ acti
       return { active: false, error: 'Subscription expired' };
     }
 
-    const active = data.subscription_status === 'ACTIVE' && data.access_status === 'ACTIVE';
+    const active = data.subscription_status === 'ACTIVE' && data.access_status;
     return { active, error: active ? null : 'Access denied' };
   } catch (error) {
     return { active: false, error: 'Subscription check failed' };

@@ -103,7 +103,7 @@ export const LoginForm = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <Card className="w-full max-w-md bg-card border-border">
         <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl">
             <Building className="h-6 w-6" />
             InviX ERP
           </CardTitle>

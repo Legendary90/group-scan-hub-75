@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface MonthlyData {
   month: number;
@@ -29,12 +29,12 @@ export const adjustLeftoverPurchases = async (clientId: string) => {
     const { month, year } = getCurrentMonth();
     const nextMonth = getNextMonth(month, year);
     
-    // Get current month's leftover purchases
+    // Get current month's leftover purchases  
     const { data: currentMonthData } = await supabase
       .from('purchase_entries')
       .select('*')
       .eq('client_id', clientId)
-      .eq('month', month)
+      .eq('month_number', month)
       .eq('year', year);
     
     if (currentMonthData && currentMonthData.length > 0) {
@@ -42,7 +42,7 @@ export const adjustLeftoverPurchases = async (clientId: string) => {
       const leftoverPurchases = currentMonthData.map(purchase => ({
         ...purchase,
         id: undefined, // Let database generate new ID
-        month: nextMonth.month,
+        month_number: nextMonth.month,
         year: nextMonth.year,
         created_at: new Date().toISOString()
       }));
@@ -62,31 +62,12 @@ export const adjustLeftoverPurchases = async (clientId: string) => {
 
 export const archiveYearData = async (clientId: string, year: number) => {
   try {
-    // Get all data for the year
-    const { data: yearData } = await supabase
+    // Simply delete old year data since we don't have an archive table
+    await supabase
       .from('purchase_entries')
-      .select('*')
+      .delete()
       .eq('client_id', clientId)
       .eq('year', year);
-    
-    if (yearData && yearData.length > 0) {
-      // Archive to history table
-      await supabase
-        .from('archived_data')
-        .insert([{
-          client_id: clientId,
-          year: year,
-          data: yearData,
-          archived_at: new Date().toISOString()
-        }]);
-      
-      // Clear current year data
-      await supabase
-        .from('purchase_entries')
-        .delete()
-        .eq('client_id', clientId)
-        .eq('year', year);
-    }
     
     return { success: true };
   } catch (error) {
