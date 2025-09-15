@@ -1,4 +1,4 @@
-import Dashboard from "@/components/Dashboard";
+import ERPDashboard from "@/components/ERPDashboard";
 import { LoginForm } from "@/components/LoginForm";
 import { SubscriptionExpired } from "@/components/SubscriptionExpired";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +26,7 @@ const Index = () => {
     return <SubscriptionExpired />;
   }
 
-  return <Dashboard />;
+  return <ERPDashboard />;
 };
 
 export default Index;
